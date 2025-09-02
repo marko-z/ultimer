@@ -1,13 +1,8 @@
 import Foundation
 
-public enum Phase { case preroll, work, breakTime }
+public enum Phase { case work, breakTime }
 
-public struct CyclePlan {
-    public let slotStart: Date
-    public let workEnd: Date
-    public let slotEnd: Date
-}
-
+/// Half-hour boundaries helper
 public func nextHalfHourBoundary(from date: Date, calendar: Calendar = .current) -> Date {
     let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
     let minute = comps.minute ?? 0
@@ -16,28 +11,97 @@ public func nextHalfHourBoundary(from date: Date, calendar: Calendar = .current)
     return calendar.date(byAdding: .minute, value: add, to: zeroSec)!
 }
 
-public func buildCyclePlan(
-    now: Date = Date(),
-    workMinutes: Int,
-    calendar: Calendar = .current
-) -> (phase: Phase, plan: CyclePlan) {
-    precondition([15, 18, 20, 23, 25].contains(workMinutes))
-    let foo = 0;
-    print(foo);
-    let slotStart = nextHalfHourBoundary(from: now.addingTimeInterval(-1), calendar: calendar)
-    let workEnd = calendar.date(byAdding: .minute, value: workMinutes, to: slotStart)!
-    let slotEnd = calendar.date(byAdding: .minute, value: 30, to: slotStart)!
+/// Engine that runs off real time (no decrementing counters → no drift)
+public final class UltimerEngine: ObservableObject {
 
-    let phase: Phase
-    if now < slotStart {
-        phase = .preroll
-    } else if now < workEnd {
-        phase = .work
-    } else if now < slotEnd {
-        phase = .breakTime
-    } else {
-        // past the slot; build from next slot
-        return buildCyclePlan(now: slotEnd, workMinutes: workMinutes, calendar: calendar)
+    // Config (seconds)
+    public var workDuration: TimeInterval
+    public var breakDuration: TimeInterval
+
+    // State
+    @Published public private(set) var currentPhase: Phase
+    @Published public private(set) var nextPhaseStart: Date = .now
+    @Published public private(set) var timeRemaining: TimeInterval = 0
+
+    // Slot anchors (optional but handy)
+    @Published public private(set) var slotStart: Date = .now
+    @Published public private(set) var workEnd: Date = .now
+    @Published public private(set) var slotEnd: Date = .now
+
+    public init(workMinutes: Int, breakMinutes: Int) {
+        self.workDuration = TimeInterval(workMinutes * 60)
+        self.breakDuration = TimeInterval(breakMinutes * 60)
     }
-    return (phase, CyclePlan(slotStart: slotStart, workEnd: workEnd, slotEnd: slotEnd))
+
+    /// Call when the user presses Start (or onAppear). Figures out current phase & next boundary.
+    public func start(now: Date = .now, calendar: Calendar = .current) {
+        // calculate next half hour boundary and
+        slotStart = nextHalfHourBoundary(from: now.addingTimeInterval(-1), calendar: calendar)
+        //workEnd = slotStart.addingTimeInterval(workDuration)
+        //slotEnd = slotStart.addingTimeInterval(workDuration + breakDuration)
+        
+        if now <
+        if now < slotStart {
+            
+            nextPhaseStart = slotStart
+        } else if now < workEnd {
+            currentPhase = .work
+            nextPhaseStart = workEnd
+        } else if now < slotEnd {
+            currentPhase = .breakTime
+            nextPhaseStart = slotEnd
+        } else {
+            // Past slot → start from next slot
+            start(now: slotEnd, calendar: calendar)
+            return
+        }
+
+        // Derive timeRemaining from the clock (no counters)
+        timeRemaining = max(0, nextPhaseStart.timeIntervalSince(now))
+    }
+
+    /// Call this every second (or frequently). Recomputes remaining; advances at boundary.
+    public func tick(now: Date = .now, calendar: Calendar = .current) {
+        timeRemaining = max(0, nextPhaseStart.timeIntervalSince(now))
+        if timeRemaining <= 0 {
+            advancePhase(from: now, calendar: calendar)
+            timeRemaining = max(0, nextPhaseStart.timeIntervalSince(now))
+        }
+    }
+
+    /// Flip phase and set the next boundary.
+    public func advancePhase(from now: Date = .now, calendar: Calendar = .current) {
+        switch currentPhase {
+        case .work:
+            currentPhase = .breakTime
+            nextPhaseStart = slotEnd  // end of slot
+
+        case .breakTime:
+            // Move to the next 30-min slot and re-evaluate
+            let nextSlotStart = slotEnd
+            slotStart = nextSlotStart
+            workEnd = slotStart.addingTimeInterval(workDuration)
+            slotEnd = slotStart.addingTimeInterval(workDuration + breakDuration)
+            currentPhase = .work
+            nextPhaseStart = workEnd
+        }
+    }
+
+    // Calculation of progress fraction for UI
+
+    public var phaseFraction: Double {
+        let total = (currentPhase == .work) ? workDuration : breakDuration
+        let elapsed = max(0, total - timeRemaining)
+        return min(1, elapsed / total)
+    }
+
+    public var slotFraction: Double {
+        let total = workDuration + breakDuration
+        switch currentPhase {
+        case .work:
+            return min(1, (workDuration * phaseFraction) / total)
+        case .breakTime:
+            return min(1, (workDuration + breakDuration * phaseFraction) / total)
+        }
+    }
 }
