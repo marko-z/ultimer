@@ -32,7 +32,6 @@ public final class UltimerEngine: ObservableObject {
     @Published public private(set) var timeRemaining: TimeInterval = 0
 
     // Slot anchors (handy for UI/logic)
-    @Published public private(set) var slotStart: Date = .now
     @Published public private(set) var workEnd: Date = .now
     @Published public private(set) var slotEnd: Date = .now
 
@@ -49,7 +48,8 @@ public final class UltimerEngine: ObservableObject {
             from: now.addingTimeInterval(-1), calendar: calendar)
         let total = workDuration + breakDuration
         slotEnd = slotEndCandidate
-        slotStart = slotEnd.addingTimeInterval(-total)
+
+        // slotEnd shifted by breakDuration
         workEnd = slotEnd.addingTimeInterval(-breakDuration)
 
         // Time to the end of slot (in seconds)
@@ -92,7 +92,6 @@ public final class UltimerEngine: ObservableObject {
         case .breakTime:
             // Break just ended -> roll to NEXT slot and enter WORK
             let nextSlotStart = slotEnd
-            slotStart = nextSlotStart
             workEnd = nextSlotStart.addingTimeInterval(workDuration)
             slotEnd = nextSlotStart.addingTimeInterval(total)
 
