@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9685681A2E521AAC00DE7B75 /* CoreTimer in Frameworks */ = {isa = PBXBuildFile; productRef = 968568192E521AAC00DE7B75 /* CoreTimer */; };
+		9685683B2E80761500DE7B75 /* CoreTimer in Frameworks */ = {isa = PBXBuildFile; productRef = 9685683A2E80761500DE7B75 /* CoreTimer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9685681A2E521AAC00DE7B75 /* CoreTimer in Frameworks */,
+				9685683B2E80761500DE7B75 /* CoreTimer in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = UltimerApp;
 			packageProductDependencies = (
 				968568192E521AAC00DE7B75 /* CoreTimer */,
+				9685683A2E80761500DE7B75 /* CoreTimer */,
 			);
 			productName = UltimerApp;
 			productReference = 968567DC2E52115800DE7B75 /* UltimerApp.app */;
@@ -202,7 +205,7 @@
 			mainGroup = 968567D32E52115800DE7B75;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				968568182E521AAC00DE7B75 /* XCLocalSwiftPackageReference "../../ultimer" */,
+				968568392E80761500DE7B75 /* XCLocalSwiftPackageReference "../../ultimer" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 968567DD2E52115800DE7B75 /* Products */;
@@ -563,7 +566,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		968568182E521AAC00DE7B75 /* XCLocalSwiftPackageReference "../../ultimer" */ = {
+		968568392E80761500DE7B75 /* XCLocalSwiftPackageReference "../../ultimer" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../ultimer;
 		};
@@ -571,6 +574,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		968568192E521AAC00DE7B75 /* CoreTimer */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CoreTimer;
+		};
+		9685683A2E80761500DE7B75 /* CoreTimer */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CoreTimer;
 		};
